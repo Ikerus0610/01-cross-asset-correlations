@@ -1,0 +1,6 @@
+# Direct runtime dependencies. The resolved Python 3.12 lock is requirements.txt.
+streamlit==1.52.2
+pandas==2.2.3
+numpy==2.3.5
+plotly==6.5.0
+exchange-calendars==4.11.3
