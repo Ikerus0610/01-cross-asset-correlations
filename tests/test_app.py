@@ -1,6 +1,9 @@
 from datetime import date
 from pathlib import Path
 import unittest
+from unittest.mock import patch
+
+import pandas as pd
 
 from streamlit.testing.v1 import AppTest
 
@@ -9,6 +12,14 @@ APP = Path(__file__).resolve().parents[1] / "app.py"
 
 class AppFlowTest(unittest.TestCase):
     def setUp(self):
+        prices = pd.read_csv(APP.parent / "data/demo_prices.csv", parse_dates=["date"]).set_index("date")
+        response = pd.concat({"Adj Close": prices, "Close": prices * 2}, axis=1)
+        from lab.yahoo import download_prices
+        download_prices.clear()
+        mock = patch("lab.yahoo.yf.download", return_value=response)
+        mock.start()
+        self.addCleanup(mock.stop)
+        self.addCleanup(download_prices.clear)
         self.at = AppTest.from_file(str(APP), default_timeout=20).run()
 
     def test_default_header_and_detail_match(self):

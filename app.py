@@ -1,7 +1,7 @@
 """Streamlit entry point. Run with streamlit run app.py."""
 
 from hashlib import sha256
-from pathlib import Path
+from lab.yahoo import market_prices
 
 import pandas as pd
 import streamlit as st
@@ -17,7 +17,6 @@ from lab.stats import (
     tail_sample,
 )
 
-ROOT = Path(__file__).resolve().parent
 st.set_page_config(
     page_title="Cross-Asset Correlation Lab", layout="wide", page_icon="📊"
 )
@@ -286,22 +285,7 @@ def matrix_view(period, rule, fall):
 def main():
     with st.sidebar:
         st.markdown("### Research controls")
-        mode = st.radio("Price source", ["Synthetic demo", "Import CSV"])
-        if mode == "Import CSV":
-            upload = st.file_uploader("Adjusted daily prices", type="csv")
-            st.download_button(
-                "Download CSV template",
-                (ROOT / "data/template.csv").read_bytes(),
-                "template.csv",
-            )
-            if upload is None:
-                st.info(
-                    "Upload a CSV to start. The template lists the six required tickers."
-                )
-                st.stop()
-            blob = upload.getvalue()
-        else:
-            blob = (ROOT / "data/demo_prices.csv").read_bytes()
+        blob, through = market_prices(TICKERS)
         identity = sha256(blob).hexdigest()
         try:
             if st.session_state.get("dataset_id") != identity:
@@ -312,13 +296,10 @@ def main():
             st.error(str(exc))
             st.stop()
         idx = dataset.prices.index
-        source = "Synthetic demo" if mode == "Synthetic demo" else "Imported CSV"
-        if mode == "Import CSV" and blob in (
-            (ROOT / "data/demo_prices.csv").read_bytes(),
-            (ROOT / "data/example_prices.csv").read_bytes(),
-        ):
-            source = "Synthetic demo · imported CSV"
-        st.caption(f"{source}  ·  {idx[0]:%Y}–{idx[-1]:%Y}")
+        source = "Yahoo Finance · yfinance"
+        st.caption(f"{source} · Last available date: {idx[-1]:%Y-%m-%d}")
+        if idx[-1] < through:
+            st.warning(f"Yahoo has not supplied the latest completed session ({through:%Y-%m-%d}).")
     st.html(
         '<div class="mast"><span class="mark"><i></i><i></i><i></i></span> QUANTITATIVE RESEARCH PORTFOLIO / 01</div><h1 class="lab-title">Cross-Asset Correlation Lab</h1>'
     )

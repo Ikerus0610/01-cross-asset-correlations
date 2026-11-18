@@ -2,9 +2,7 @@
 
 **On the S&P 500's worst trading days, which assets gained, how often, and did the answer change across periods?** This first project in a quantitative research portfolio studies six US-listed instruments using daily adjusted closing prices. The opening screen ranks their median returns on days selected by SPY.
 
-![Running Streamlit app showing UUP's synthetic median return, the session count and the inspection table control](docs/downside-demo.png)
-
-## Run the demo
+## Run locally
 
 Use Python 3.12. From the project directory, run these commands on macOS or Linux.
 
@@ -15,20 +13,7 @@ python -m pip install -r requirements.txt
 streamlit run app.py
 ```
 
-Open the local address printed by Streamlit. The first installation needs internet access. After installation, the demo, charts, calendar and CSV import run offline without credentials.
-
-## Read the first result
-
-The **synthetic demo** covers 4 January 2021 through 31 December 2024. The worst 5% rule selects **51 of 1,004 valid SPY returns**. UUP has the highest median, **+0.60%**, and finishes positive on **51 of 51** selected days. Its within-sample Pearson correlation with SPY is **−0.498**. The median measures a typical daily outcome in this sample. The correlation measures how the two returns varied together around their respective sample means.
-
-Open **Inspect analysis period dates and returns** to check every observation, sorted by SPY loss. The downloadable CSV retains decimal returns at calculation precision. Enable **Compare two periods** to see the deliberately engineered shift in Treasury behavior.
-
-| Synthetic SPY tail sample | SPY cutoff, rounded | Valid IEF days | IEF median return | IEF positive days |
-|---|---:|---:|---:|---:|
-| 2021–2022 | −1.78% | 26 | +1.09% | 26 / 26 |
-| 2023–2024 | −1.71% | 26 | −0.80% | 0 / 26 |
-
-Each period has its own relative cutoff. The periods can therefore select a different set of days from the pooled sample. Use a fixed decline to compare responses to the same absolute SPY loss. These numbers demonstrate the software using fictional prices. Historical market conclusions require sourced adjusted prices.
+Open the local Streamlit address. The app downloads twelve years of adjusted daily ETF closes via yfinance and opens the downside analysis automatically. The sidebar shows the latest available date. Yahoo responses are cached for one hour and the cache key changes after a session closes. Missing prices remain missing. A failed download offers a retry.
 
 ## Research views
 
@@ -53,18 +38,6 @@ All prices refer to US-listed shares in USD. The issuer pages describe the instr
 
 US closing prices give the six instruments a common observation time. ETF and commodity-pool share returns include tracking differences and fees. Use a consistent adjustment methodology across instruments, including splits and cash distributions where applicable.
 
-## Import adjusted prices
-
-Choose **Import CSV**. Supply a UTF-8, comma-separated file with exactly the seven named columns, in any order. Use a decimal point, positive finite prices and one row per US equity session. Rows can arrive unsorted. Leave a missing quote blank or use `NA` or `N/A`.
-
-```csv
-date,SPY,QQQ,IEF,UUP,GLD,USO
-2021-01-04,100.00000000,100.00000000,100.00000000,100.00000000,100.00000000,100.00000000
-2021-01-05,100.33406818,100.03659582,99.95906070,100.29572084,100.46072292,101.03806367
-```
-
-These are synthetic rows. Use the [header template](data/template.csv) or try the [12-row synthetic example](data/example_prices.csv). The sidebar reports missing session dates, missing quotes and valid return counts. Two adjacent prices produce one return. Import longer histories for rolling estimates. Uploaded files are processed in the running Streamlit session and the application writes no uploads to disk. On a hosted instance the upload is sent to that server.
-
 ## Methodology
 
 - **Calendar and returns.** The app sorts dates and reindexes prices to every XNYS session between the first and last supplied dates. Weekends and exchange holidays are excluded. Daily simple return is `r[t] = P_adj[t] / P_adj[t−1] − 1`, where the denominator is the previous scheduled session's price. A missing session or quote invalidates both adjacent returns for the affected instrument. No forward-fill or multi-session bridging is applied. The first price row has no return.
@@ -77,9 +50,7 @@ These are synthetic rows. Use the [header template](data/template.csv) or try th
 
 ## Provenance, verification and deployment
 
-The application code, tests, simulated prices and screenshot were created for this project. `scripts/generate_demo.py` generates the two-regime sample with NumPy seed 701. Its IEF equity-factor loading changes sign in January 2023. The app reads the committed fixture directly. Regenerate it with `python -m scripts.generate_demo`.
-
-External resources are the separately installed Python packages in [requirements.txt](requirements.txt), the XNYS schedule supplied by [exchange_calendars](https://github.com/gerrymanoim/exchange_calendars), and the linked issuer descriptions. The repository includes **no third-party price history** or download integration. Import a dataset you are permitted to use. To publish empirical findings, record the provider, retrieval date, adjustment convention and date coverage and check redistribution rights separately.
+Yahoo Finance supplies adjusted closes at runtime. The repository contains synthetic fixtures for the tests. For data usage terms, see the [yfinance documentation](https://ranaroussi.github.io/yfinance/).
 
 ```bash
 python -m unittest discover -s tests -v
